@@ -36,25 +36,29 @@ export function Plantacion3D({ plantacion, onUpdate }: Plantacion3DProps) {
     const adcMax = 4000;
     const vIn = 3.3;
     const rFixed = 10000; // 10kΩ
-  
+
     // 1. Convertir valor ADC a voltaje
     const voltage = (adcValue / adcMax) * vIn;
-  
+
     // 2. Calcular resistencia del LDR
     const rLDR = rFixed * (voltage / (vIn - voltage));
-  
+
     // 3. Calcular lux estimado
     const lux = 500 * Math.pow((10000 / rLDR), 1.4);
-  
+
     return Math.round(lux);
   }
-  
-  
+
+  const completarFecha = (hora: string) => {
+    const hoy = new Date().toISOString().split("T")[0];
+    return new Date(`${hoy}T${hora}`);
+  }
+
 
   useEffect(() => {
     if (plantacion.tipo === "real") {
       // Conectar al WebSocket del ESP32
-      wsRef.current = new WebSocket("ws://192.168.1.100/ws") // Reemplazar con la IP correcta
+      wsRef.current = new WebSocket("wss://desktop-5ldkqva.taila9e2ab.ts.net/ws") // Reemplazar con la IP correcta
 
       wsRef.current.onmessage = (event) => {
         try {
@@ -101,7 +105,7 @@ export function Plantacion3D({ plantacion, onUpdate }: Plantacion3DProps) {
       timestamp: new Date().toISOString()
     })
   }
-  
+
 
   return (
     <Card className="w-full">
@@ -114,7 +118,7 @@ export function Plantacion3D({ plantacion, onUpdate }: Plantacion3DProps) {
         </div>
       </CardHeader>
       <CardContent>
-        <div className="space-y-4">          
+        <div className="space-y-4">
           <div>
             <div className="flex justify-between mb-2">
               <span className="text-sm font-medium">Humedad del Suelo</span>
@@ -122,7 +126,7 @@ export function Plantacion3D({ plantacion, onUpdate }: Plantacion3DProps) {
             </div>
             <Progress value={plantacion.datos.humedad} />
           </div>
-          
+
           <div>
             <div className="flex justify-between mb-2">
               <span className="text-sm font-medium">Nivel de Luz</span>
@@ -136,15 +140,18 @@ export function Plantacion3D({ plantacion, onUpdate }: Plantacion3DProps) {
             <Label htmlFor="irrigation-control" className="flex-1">
               Sistema de Riego
             </Label>
-            <Switch 
-              id="irrigation-control" 
-              checked={plantacion.datos.riegoActivo} 
+            <Switch
+              id="irrigation-control"
+              checked={plantacion.datos.riegoActivo}
               onCheckedChange={handleRiegoChange}
             />
           </div>
 
           <div className="text-xs text-muted-foreground">
-            Última actualización: {new Date(plantacion.datos.timestamp).toLocaleString()}
+            Última actualización: {(plantacion.tipo === "real"
+              ? completarFecha(plantacion.datos.timestamp)
+              : new Date(plantacion.datos.timestamp)
+            ).toLocaleString()}
           </div>
         </div>
       </CardContent>
