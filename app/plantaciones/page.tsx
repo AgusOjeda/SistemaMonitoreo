@@ -5,8 +5,6 @@ import { Button } from "@/components/ui/button"
 import { Plus } from "lucide-react"
 import { Plantacion3D } from "@/components/plantacion-3d"
 import { Campo3D } from "@/components/campo-3d"
-import { Greenhouse3DView } from "@/components/greenhouse-3d-view"
-
 interface Plantacion {
   id: string
   nombre: string

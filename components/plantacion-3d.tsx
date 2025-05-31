@@ -32,6 +32,25 @@ interface Plantacion3DProps {
 export function Plantacion3D({ plantacion, onUpdate }: Plantacion3DProps) {
   const wsRef = useRef<WebSocket | null>(null)
 
+  function estimateLuxFromADC(adcValue: number) {
+    const adcMax = 4000;
+    const vIn = 3.3;
+    const rFixed = 10000; // 10kΩ
+  
+    // 1. Convertir valor ADC a voltaje
+    const voltage = (adcValue / adcMax) * vIn;
+  
+    // 2. Calcular resistencia del LDR
+    const rLDR = rFixed * (voltage / (vIn - voltage));
+  
+    // 3. Calcular lux estimado
+    const lux = 500 * Math.pow((10000 / rLDR), 1.4);
+  
+    return Math.round(lux);
+  }
+  
+  
+
   useEffect(() => {
     if (plantacion.tipo === "real") {
       // Conectar al WebSocket del ESP32
@@ -42,7 +61,7 @@ export function Plantacion3D({ plantacion, onUpdate }: Plantacion3DProps) {
           const data = JSON.parse(event.data)
           onUpdate({
             humedad: data.humedad,
-            luz: data.ldr,
+            luz: estimateLuxFromADC(data.ldr),
             riegoActivo: data.riegoActivo,
             timestamp: data.timestamp
           })
@@ -82,6 +101,7 @@ export function Plantacion3D({ plantacion, onUpdate }: Plantacion3DProps) {
       timestamp: new Date().toISOString()
     })
   }
+  
 
   return (
     <Card className="w-full">
@@ -108,7 +128,7 @@ export function Plantacion3D({ plantacion, onUpdate }: Plantacion3DProps) {
               <span className="text-sm font-medium">Nivel de Luz</span>
               <span className="text-sm text-muted-foreground">{plantacion.datos.luz.toFixed(0)} lux</span>
             </div>
-            <Progress value={(plantacion.datos.luz / 3000) * 100} />
+            <Progress value={Math.min((plantacion.datos.luz / 1000) * 100, 100)} />
           </div>
 
           <div className="flex items-center gap-4">
