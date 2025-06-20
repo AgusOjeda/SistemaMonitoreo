@@ -1,16 +1,18 @@
 import { initializeApp } from "firebase/app"
 import { getAuth } from "firebase/auth"
 
-// Cambiar a los datos correctos para conectar con firebase
+
+// Your web app's Firebase configuration
 
 const firebaseConfig = {
-  apiKey: "TU_API_KEY",
-  authDomain: "TU_DOMINIO.firebaseapp.com",
-  projectId: "TU_PROJECT_ID",
-  storageBucket: "TU_BUCKET.appspot.com",
-  messagingSenderId: "TU_ID",
-  appId: "TU_APP_ID"
-}
+    apiKey: "AIzaSyAeE7mYJke8to857s5n75143OKUreuTv_w",
+    authDomain: "sistemariegoptr.firebaseapp.com",
+    projectId: "sistemariegoptr",
+    storageBucket: "sistemariegoptr.firebasestorage.app",
+    messagingSenderId: "759970982954",
+    appId: "1:759970982954:web:c97837b1878ac19ce7a753"
+};
+
 
 const app = initializeApp(firebaseConfig)
 
