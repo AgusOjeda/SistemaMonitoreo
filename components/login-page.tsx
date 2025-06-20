@@ -1,5 +1,8 @@
 "use client"
 
+import { auth } from "@/firebase/firebase"
+import { signInWithEmailAndPassword } from "firebase/auth"
+import { useRouter } from "next/navigation"
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -13,19 +16,16 @@ export default function Loginpage() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
+  const router = useRouter()
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
     setError(null)
 
     try {
-      // Aquí va la lógica con Firebase Auth para login
-      // await signInWithEmailAndPassword(auth, email, password)
-      // Redirigir o actualizar estado luego del login exitoso
-
-      // Por ahora solo simulamos éxito con delay
-      await new Promise((res) => setTimeout(res, 1000))
-      alert("Login exitoso (simulado)")
+      await signInWithEmailAndPassword(auth, email, password)
+      router.push("/dashboard") // Te envia al home
     } catch (err) {
       setError("Email o contraseña incorrectos")
     } finally {
