@@ -13,6 +13,7 @@ interface Plantacion {
     humedad: number
     luz: number
     riegoActivo: boolean
+    iluminacionActiva: boolean 
     timestamp: string
   }
 }
@@ -36,6 +37,7 @@ export default function PlantacionesPage() {
         humedad: 0,
         luz: 0,
         riegoActivo: false,
+        iluminacionActiva: false,
         timestamp: ""
       }
     }
@@ -51,6 +53,7 @@ export default function PlantacionesPage() {
         humedad: Math.random() * 100,
         luz: Math.random() * 3000,
         riegoActivo: false,
+        iluminacionActiva: false,
         timestamp: new Date().toISOString()
       }
     }

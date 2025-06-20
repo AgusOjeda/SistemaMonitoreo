@@ -7,7 +7,7 @@ import { Progress } from "@/components/ui/progress"
 import { Plantacion3DScene } from "./plantacion-3d-scene"
 import { Label } from "@/components/ui/label"
 import { Switch } from "@/components/ui/switch"
-import { Droplets } from "lucide-react"
+import { Droplets, Lightbulb } from "lucide-react"
 
 interface Plantacion3DProps {
   plantacion: {
@@ -18,6 +18,7 @@ interface Plantacion3DProps {
       humedad: number
       luz: number
       riegoActivo: boolean
+      iluminacionActiva: boolean
       timestamp: string
     }
   }
@@ -25,6 +26,7 @@ interface Plantacion3DProps {
     humedad: number
     luz: number
     riegoActivo: boolean
+    iluminacionActiva : boolean
     timestamp: string
   }) => void
 }
@@ -67,6 +69,7 @@ export function Plantacion3D({ plantacion, onUpdate }: Plantacion3DProps) {
             humedad: data.humedad,
             luz: estimateLuxFromADC(data.ldr),
             riegoActivo: data.riegoActivo,
+            iluminacionActiva: plantacion.datos.iluminacionActiva,
             timestamp: data.timestamp
           })
         } catch (error) {
@@ -90,6 +93,7 @@ export function Plantacion3D({ plantacion, onUpdate }: Plantacion3DProps) {
           humedad: Math.random() * 100,
           luz: Math.random() * 3000,
           riegoActivo: plantacion.datos.riegoActivo, // Mantener el estado del riego
+          iluminacionActiva: plantacion.datos.iluminacionActiva,
           timestamp: new Date().toISOString()
         })
       }, 5000)
@@ -98,10 +102,35 @@ export function Plantacion3D({ plantacion, onUpdate }: Plantacion3DProps) {
     }
   }, [plantacion.tipo, onUpdate, plantacion.datos.riegoActivo])
 
+  // Manejar handle de riego para encender y apagar en el esp32
+
   const handleRiegoChange = (checked: boolean) => {
     onUpdate({
       ...plantacion.datos,
       riegoActivo: checked,
+      timestamp: new Date().toISOString()
+    })
+  }
+
+
+  // Manejar handle de iluminacion para encender y apagar en el esp32
+
+  const handleIluminacionChange = (checked: boolean) => {
+    if (plantacion.tipo === "real") {
+      if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
+        wsRef.current.send(
+          JSON.stringify({
+            [checked ? "ILUM_ON" : "ILUM_OFF"]: true,
+            AUTO_OFF: true
+          })
+        )
+      } else {
+        console.warn("WebSocket no está conectado")
+      }
+    }
+
+    onUpdate({
+      ...plantacion.datos,
       timestamp: new Date().toISOString()
     })
   }
@@ -144,6 +173,19 @@ export function Plantacion3D({ plantacion, onUpdate }: Plantacion3DProps) {
               id="irrigation-control"
               checked={plantacion.datos.riegoActivo}
               onCheckedChange={handleRiegoChange}
+            />
+          </div>
+
+          <div className="flex items-center gap-4">
+            <Lightbulb className="h-5 w-5 text-yellow-500" />
+
+            <Label htmlFor="iluminacion-control" className="flex-1">
+              Sistema de Iluminación
+            </Label>
+            <Switch
+              id="iluminacion-control"
+              checked={plantacion.datos.iluminacionActiva}
+              onCheckedChange={handleIluminacionChange}
             />
           </div>
 

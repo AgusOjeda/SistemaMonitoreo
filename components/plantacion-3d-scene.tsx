@@ -1,4 +1,4 @@
- "use client"
+"use client"
 
 import { useRef } from "react"
 import { Canvas, useFrame } from "@react-three/fiber"
@@ -9,19 +9,20 @@ interface Plantacion3DSceneProps {
   humedad: number
   luz: number
   riegoActivo: boolean
+  iluminacionActiva: boolean
 }
 
 function Planta({ humedad, luz, riegoActivo }: Plantacion3DSceneProps) {
   const meshRef = useRef<THREE.Mesh>(null)
-  
+
   // Color de la planta basado en la humedad y luz
   const color = new THREE.Color()
   const humedadColor = humedad / 100 // 0-1
   const luzColor = luz / 3000 // 0-1
-  
+
   // Verde más oscuro si hay poca humedad, más claro si hay mucha
   color.setHSL(0.3, 0.8, 0.3 + humedadColor * 0.4)
-  
+
   // Altura de la planta basada en la luz
   const altura = 1 + luzColor * 2
 
@@ -67,9 +68,18 @@ export function Plantacion3DScene(props: Plantacion3DSceneProps) {
       <Canvas camera={{ position: [3, 3, 3], fov: 50 }}>
         <ambientLight intensity={0.5} />
         <pointLight position={[10, 10, 10]} intensity={1} />
+        {props.iluminacionActiva && (
+          <spotLight
+            position={[2, 5, 2]}
+            angle={0.5}
+            penumbra={0.3}
+            intensity={5}
+            castShadow
+          />
+        )}
         <Planta {...props} />
         <Suelo humedad={props.humedad} />
-        <OrbitControls enableZoom={true} enablePan={true} enableRotate={true} />
+        <OrbitControls enableZoom enablePan enableRotate />
       </Canvas>
     </div>
   )
