@@ -91,6 +91,19 @@ export function Plantacion3D({ plantacion, onUpdate }: Plantacion3DProps) {
   }, [plantacion.tipo, plantacion.datos.riegoActivo, plantacion.datos.luzActiva])
 
   const handleRiegoChange = (checked: boolean) => {
+    if (plantacion.tipo === "real") {
+      if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
+        wsRef.current.send(
+          JSON.stringify({
+            [checked ? "RIEGO_ON" : "RIEGO_OFF"]: true,
+            AUTO_OFF: true
+          })
+        )
+      } else {
+        console.warn("WebSocket no está conectado")
+      }
+    }
+
     onUpdate({
       ...plantacion.datos,
       riegoActivo: checked,
@@ -118,6 +131,7 @@ export function Plantacion3D({ plantacion, onUpdate }: Plantacion3DProps) {
       timestamp: new Date().toISOString()
     })
   }
+
 
   return (
     <Card className="w-full">
