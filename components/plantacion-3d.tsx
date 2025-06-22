@@ -4,7 +4,6 @@ import { useEffect, useRef } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Progress } from "@/components/ui/progress"
-import { Plantacion3DScene } from "./plantacion-3d-scene"
 import { Label } from "@/components/ui/label"
 import { Switch } from "@/components/ui/switch"
 import { Droplets, Lightbulb } from "lucide-react"
@@ -18,7 +17,7 @@ interface Plantacion3DProps {
       humedad: number
       luz: number
       riegoActivo: boolean
-      iluminacionActiva: boolean
+      luzActiva: boolean
       timestamp: string
     }
   }
@@ -26,7 +25,7 @@ interface Plantacion3DProps {
     humedad: number
     luz: number
     riegoActivo: boolean
-    iluminacionActiva : boolean
+    luzActiva: boolean
     timestamp: string
   }) => void
 }
@@ -35,32 +34,24 @@ export function Plantacion3D({ plantacion, onUpdate }: Plantacion3DProps) {
   const wsRef = useRef<WebSocket | null>(null)
 
   function estimateLuxFromADC(adcValue: number) {
-    const adcMax = 4000;
-    const vIn = 3.3;
-    const rFixed = 10000; // 10kΩ
+    const adcMax = 4000
+    const vIn = 3.3
+    const rFixed = 10000
 
-    // 1. Convertir valor ADC a voltaje
-    const voltage = (adcValue / adcMax) * vIn;
-
-    // 2. Calcular resistencia del LDR
-    const rLDR = rFixed * (voltage / (vIn - voltage));
-
-    // 3. Calcular lux estimado
-    const lux = 500 * Math.pow((10000 / rLDR), 1.4);
-
-    return Math.round(lux);
+    const voltage = (adcValue / adcMax) * vIn
+    const rLDR = rFixed * (voltage / (vIn - voltage))
+    const lux = 500 * Math.pow((10000 / rLDR), 1.4)
+    return Math.round(lux)
   }
 
   const completarFecha = (hora: string) => {
-    const hoy = new Date().toISOString().split("T")[0];
-    return new Date(`${hoy}T${hora}`);
+    const hoy = new Date().toISOString().split("T")[0]
+    return new Date(`${hoy}T${hora}`)
   }
-
 
   useEffect(() => {
     if (plantacion.tipo === "real") {
-      // Conectar al WebSocket del ESP32
-      wsRef.current = new WebSocket("wss://desktop-5ldkqva.taila9e2ab.ts.net/ws") // Reemplazar con la IP correcta
+      wsRef.current = new WebSocket("wss://desktop-5ldkqva.taila9e2ab.ts.net/ws")
 
       wsRef.current.onmessage = (event) => {
         try {
@@ -69,7 +60,7 @@ export function Plantacion3D({ plantacion, onUpdate }: Plantacion3DProps) {
             humedad: data.humedad,
             luz: estimateLuxFromADC(data.ldr),
             riegoActivo: data.riegoActivo,
-            iluminacionActiva: plantacion.datos.iluminacionActiva,
+            luzActiva: plantacion.datos.luzActiva,
             timestamp: data.timestamp
           })
         } catch (error) {
@@ -82,27 +73,22 @@ export function Plantacion3D({ plantacion, onUpdate }: Plantacion3DProps) {
       }
 
       return () => {
-        if (wsRef.current) {
-          wsRef.current.close()
-        }
+        if (wsRef.current) wsRef.current.close()
       }
     } else {
-      // Simular datos para plantaciones simuladas
       const interval = setInterval(() => {
         onUpdate({
           humedad: Math.random() * 100,
           luz: Math.random() * 3000,
-          riegoActivo: plantacion.datos.riegoActivo, // Mantener el estado del riego
-          iluminacionActiva: plantacion.datos.iluminacionActiva,
+          riegoActivo: plantacion.datos.riegoActivo,
+          luzActiva: plantacion.datos.luzActiva,
           timestamp: new Date().toISOString()
         })
       }, 5000)
 
       return () => clearInterval(interval)
     }
-  }, [plantacion.tipo, onUpdate, plantacion.datos.riegoActivo])
-
-  // Manejar handle de riego para encender y apagar en el esp32
+  }, [plantacion.tipo, plantacion.datos.riegoActivo, plantacion.datos.luzActiva])
 
   const handleRiegoChange = (checked: boolean) => {
     onUpdate({
@@ -111,9 +97,6 @@ export function Plantacion3D({ plantacion, onUpdate }: Plantacion3DProps) {
       timestamp: new Date().toISOString()
     })
   }
-
-
-  // Manejar handle de iluminacion para encender y apagar en el esp32
 
   const handleIluminacionChange = (checked: boolean) => {
     if (plantacion.tipo === "real") {
@@ -131,10 +114,10 @@ export function Plantacion3D({ plantacion, onUpdate }: Plantacion3DProps) {
 
     onUpdate({
       ...plantacion.datos,
+      luzActiva: checked,
       timestamp: new Date().toISOString()
     })
   }
-
 
   return (
     <Card className="w-full">
@@ -151,7 +134,9 @@ export function Plantacion3D({ plantacion, onUpdate }: Plantacion3DProps) {
           <div>
             <div className="flex justify-between mb-2">
               <span className="text-sm font-medium">Humedad del Suelo</span>
-              <span className="text-sm text-muted-foreground">{plantacion.datos.humedad.toFixed(1)}%</span>
+              <span className="text-sm text-muted-foreground">
+                {plantacion.datos.humedad.toFixed(1)}%
+              </span>
             </div>
             <Progress value={plantacion.datos.humedad} />
           </div>
@@ -159,7 +144,9 @@ export function Plantacion3D({ plantacion, onUpdate }: Plantacion3DProps) {
           <div>
             <div className="flex justify-between mb-2">
               <span className="text-sm font-medium">Nivel de Luz</span>
-              <span className="text-sm text-muted-foreground">{plantacion.datos.luz.toFixed(0)} lux</span>
+              <span className="text-sm text-muted-foreground">
+                {plantacion.datos.luz.toFixed(0)} lux
+              </span>
             </div>
             <Progress value={Math.min((plantacion.datos.luz / 1000) * 100, 100)} />
           </div>
@@ -178,19 +165,19 @@ export function Plantacion3D({ plantacion, onUpdate }: Plantacion3DProps) {
 
           <div className="flex items-center gap-4">
             <Lightbulb className="h-5 w-5 text-yellow-500" />
-
             <Label htmlFor="iluminacion-control" className="flex-1">
               Sistema de Iluminación
             </Label>
             <Switch
               id="iluminacion-control"
-              checked={plantacion.datos.iluminacionActiva}
+              checked={plantacion.datos.luzActiva}
               onCheckedChange={handleIluminacionChange}
             />
           </div>
 
           <div className="text-xs text-muted-foreground">
-            Última actualización: {(plantacion.tipo === "real"
+            Última actualización:{" "}
+            {(plantacion.tipo === "real"
               ? completarFecha(plantacion.datos.timestamp)
               : new Date(plantacion.datos.timestamp)
             ).toLocaleString()}
@@ -199,4 +186,4 @@ export function Plantacion3D({ plantacion, onUpdate }: Plantacion3DProps) {
       </CardContent>
     </Card>
   )
-} 
+}
