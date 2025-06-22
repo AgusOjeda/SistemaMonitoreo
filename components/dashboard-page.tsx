@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
@@ -26,9 +26,9 @@ const generateData = (config: typeof defaultConfig) => {
   const humidity = Math.floor(Math.random() * 60) + 20 // 20-80%
   const light = Math.floor(Math.random() * 2000) + 500 // 500-2500 unidades
 
-  const irrigationActive = config.irrigation.enabled && 
-    humidity < config.irrigation.humidityThreshold && 
-    temperature > config.irrigation.tempThreshold && 
+  const irrigationActive = config.irrigation.enabled &&
+    humidity < config.irrigation.humidityThreshold &&
+    temperature > config.irrigation.tempThreshold &&
     light < config.irrigation.lightThreshold
 
   return { temperature, humidity, light, irrigationActive }
@@ -38,6 +38,53 @@ export function DashboardPage() {
   const [config, setConfig] = useState(defaultConfig)
   const [systemData, setSystemData] = useState(generateData(defaultConfig))
   const [systemStatus, setSystemStatus] = useState("Normal")
+
+
+  // Websocket
+
+  const ws = useRef<WebSocket | null>(null)
+
+  useEffect(() => {
+    ws.current = new WebSocket("wss://desktop-5ldkqva.taila9e2ab.ts.net/ws")
+
+    ws.current.onopen = () => {
+      console.log("Conectado al servidor WebSocket")
+    }
+
+    ws.current.onmessage = (event) => {
+      const jsonData = JSON.parse(event.data)
+      console.log("WS data:", jsonData)
+    }
+
+    ws.current.onclose = () => {
+      console.log("Conexión cerrada")
+    }
+
+    return () => {
+      ws.current?.close()
+    }
+  }, [])
+
+  // Funciones para enviar comandos al WS
+
+  const sendCommand = (data: object) => {
+    if (ws.current && ws.current.readyState === WebSocket.OPEN) {
+      ws.current.send(JSON.stringify(data))
+    }
+  }
+
+  const autoOn = () => sendCommand({ AUTO_ON: true })
+  const autoOff = () => sendCommand({ AUTO_OFF: true })
+
+  // Escuchar cambios en irrigationActive para enviar comando automático
+
+  useEffect(() => {
+    if (systemData.irrigationActive) {
+      autoOn()
+    } else {
+      autoOff()
+    }
+  }, [systemData.irrigationActive])
 
   useEffect(() => {
     const tempConfig = JSON.parse(localStorage.getItem("tempConfig") || "{}");
@@ -72,13 +119,13 @@ export function DashboardPage() {
 
   // Actualizar el estado del sistema basado en los datos y la configuración
   useEffect(() => {
-    if (systemData.temperature > config.temp.critical || 
-        systemData.humidity < config.humidity.critical || 
-        systemData.light > config.light.critical) {
+    if (systemData.temperature > config.temp.critical ||
+      systemData.humidity < config.humidity.critical ||
+      systemData.light > config.light.critical) {
       setSystemStatus("Crítico")
-    } else if (systemData.temperature > config.temp.max || 
-               systemData.humidity < config.humidity.min || 
-               systemData.light > config.light.max) {
+    } else if (systemData.temperature > config.temp.max ||
+      systemData.humidity < config.humidity.min ||
+      systemData.light > config.light.max) {
       setSystemStatus("Advertencia")
     } else {
       setSystemStatus("Normal")
