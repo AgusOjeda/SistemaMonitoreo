@@ -1,5 +1,5 @@
-import { DashboardPage } from "@/components/dashboard-page"
+import Loginpage from '@/components/login-page'
 
 export default function Home() {
-  return <DashboardPage />
+  return <Loginpage />
 }

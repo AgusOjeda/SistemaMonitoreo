@@ -1,10 +1,14 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Plus } from "lucide-react"
 import { Plantacion3D } from "@/components/plantacion-3d"
 import { Campo3D } from "@/components/campo-3d"
+import { useRouter } from "next/navigation"
+import { onAuthStateChanged, User } from "firebase/auth"
+import { auth } from "@/firebase/firebase"
+
 interface Plantacion {
   id: string
   nombre: string
@@ -13,7 +17,7 @@ interface Plantacion {
     humedad: number
     luz: number
     riegoActivo: boolean
-    luzActiva: boolean 
+    luzActiva: boolean
     timestamp: string
   }
 }
@@ -27,6 +31,10 @@ function generateData() {
 }
 
 export default function PlantacionesPage() {
+  const router = useRouter()
+  const [user, setUser] = useState<User | null>(null)
+  const [loading, setLoading] = useState(true)
+
   const [systemData, setSystemData] = useState(generateData())
   const [plantaciones, setPlantaciones] = useState<Plantacion[]>([
     {
@@ -43,6 +51,28 @@ export default function PlantacionesPage() {
     }
   ])
   const [seleccionadaId, setSeleccionadaId] = useState<string | null>(plantaciones[0]?.id || null)
+
+  // Desloguear el usuario en caso que no este autenticado
+
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      if (!user) {
+        router.replace("/")
+      } else {
+        setUser(user)
+      }
+      setLoading(false)
+    })
+    return () => unsubscribe()
+  }, [router])
+
+  if (loading) {
+    return <p>Cargando...</p>
+  }
+
+  if (!user) {
+    return null
+  }
 
   const agregarPlantacion = () => {
     const nuevaPlantacion: Plantacion = {
@@ -78,11 +108,11 @@ export default function PlantacionesPage() {
           Agregar Plantación
         </Button>
       </div>
-      <Campo3D 
+      <Campo3D
         plantaciones={plantaciones}
         seleccionadaId={seleccionadaId}
         onSelect={setSeleccionadaId}
-        
+
       />
       {/* Datos de la parcela seleccionada */}
       {seleccionada && (

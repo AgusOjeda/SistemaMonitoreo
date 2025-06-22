@@ -1,9 +1,9 @@
 "use client"
 
 import { auth } from "@/firebase/firebase"
-import { signInWithEmailAndPassword } from "firebase/auth"
+import { onAuthStateChanged, signInWithEmailAndPassword } from "firebase/auth"
 import { useRouter } from "next/navigation"
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -17,6 +17,18 @@ export default function Loginpage() {
   const [error, setError] = useState<string | null>(null)
 
   const router = useRouter()
+
+    // Verificar si ya está autenticado y redirigir al dashboard
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      if (user) {
+        // Usuario ya logueado, redirigir al dashboard
+        router.replace("/dashboard")
+      }
+    })
+
+    return () => unsubscribe()
+  }, [router])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
